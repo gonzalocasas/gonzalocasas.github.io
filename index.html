@@ -1,6 +1,53 @@
-hello.
+<!doctype html>
+<html lang="en">
+  <head>
+    <style>
+      @import url('https://fonts.googleapis.com/css?family=Fira+Sans:100,200,700');
+      @import url('https://use.fontawesome.com/releases/v5.4.1/css/all.css');
 
-this is gonzalo. i do software. and some hardware.
+      body {
+        min-height: 100%;
+        font-family: 'Fira Sans', sans-serif;
+        font-weight: 100;
+        font-size: 4rem;
+        margin: 10rem;
+      }
 
-..
-https://twitter.com/gnz
+      a {
+          white-space:nowrap;
+          font-weight: 700;
+        color: black;
+        text-decoration: none;
+        transition: all cubic-bezier(0.4, 0.0, 0.2, 1) .7s;
+      }
+
+      a:hover {
+        color: #003076;
+        background-color: #efefef;
+        border: 1px dotted #003076;
+        padding: 0 	10px;
+      }
+
+      a.light {
+        font-weight: 200;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Hi. I'm <a href="https://twitter.com/gnz" target="_blank">Gonzalo Casas</a>.</p>
+
+    <p>I'm a software engineer at <a href="http://gramaziokohler.arch.ethz.ch/" target="_blank">Gramazio Kohler Research</a> in
+    <a href="https://www.openstreetmap.org/?mlat=47.40879&mlon=8.50589#map=17/47.40880/8.50588" class="light" target="_blank">ETH Zürich <i class="fas fa-map-marker-alt"></i></a>,
+    working on making applied robotics for architecture more accessible <a href="https://github.com/gramaziokohler/compas_fab" class="light" target="_blank">for everyone <i class="fab fa-github"></i></a>.</p>
+
+    <p>
+    Initiator of the <a href="https://www.thethingsnetwork.org/c/zurich" target="_blank" class="light">Zürich Community</a> of <a href="https://www.thethingsnetwork.org/" target="_blank">The Things Network</a>,
+    organizer of the <a href="https://makezurich.ch" target="_blank">Make Zurich <i class="fab fa-hacker-news-square"></i></a> hackathons,
+    and huge advocate of <a href="https://github.com/gonzalocasas" target="_blank">open source <i class="fab fa-github"></i></a>.</p>
+
+    <p>
+      <a href="https://github.com/gonzalocasas" class="light" target="_blank"><i class="fab fa-github"></i></a> | 
+      <a href="https://twitter.com/gnz" class="light" target="_blank"><i class="fab fa-twitter"></i></a>
+    </p>
+  </body>
+</html>
