@@ -1,24 +1,34 @@
 <html>
- <head>
-   <style>
-     body { margin:0;  }
-   </style>    
- </head>
- <body>
+
+<head>
+  <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="https://raw.githubusercontent.com/RobotWebTools/roslibjs/develop/build/roslib.min.js"></script>
+</head>
+
+<body>
   <script src="https://www.puck-js.com/puck.js"></script>
   <script type="text/javascript">
-    function onLine(v) {
-      console.log("Received: "+ v);
+    let ros = new ROSLIB.Ros();
+    ros.on('error', (error) => console.log('ROS error: ' + error));
+    ros.on('connection', () => console.log('ROS connection ready!'));
+    ros.connect('ws://localhost:9090');
+
+    let sliderCommands = new ROSLIB.Topic({ros: ros, name: '/slider_commands', messageType: 'std_msgs/String'});
+
+    function onLine(value) {
+      //let values = value.split(';').map(Number)
+      let sliderCommand = new ROSLIB.Message({data: value})
+      sliderCommands.publish(sliderCommand);
     }
 
-// When ready
-    var connection;
-    document.addEventListener("DOMContentLoaded", function() {
+    // When ready
+    let connection;
+    document.addEventListener("DOMContentLoaded", function () {
       if (connection) {
         connection.close();
         connection = undefined;
       }
-      Puck.connect(function(c) {
+      Puck.connect(function (c) {
         if (!c) {
           alert("Couldn't connect!");
           return;
@@ -26,29 +36,30 @@
         connection = c;
         // Handle the data we get back, and call 'onLine'
         // whenever we get a line
-        var buf = "";
-        connection.on("data", function(d) {
+        let buf = "";
+        connection.on("data", function (d) {
           buf += d;
-          var i = buf.indexOf("\n");
-          while (i>=0) {
-            onLine(buf.substr(0,i));
-            buf = buf.substr(i+1);
+          let i = buf.indexOf("\n");
+          while (i >= 0) {
+            onLine(buf.substr(0, i));
+            buf = buf.substr(i + 1);
             i = buf.indexOf("\n");
           }
         });
         // First, reset Puck.js
-        connection.write("reset();\n", function() {
+        connection.write("reset();\n", function () {
           // Wait for it to reset itself
-          setTimeout(function() {
+          setTimeout(function () {
             // Now tell it to write data on the current pot and capsense to Bluetooth
             // 10 times a second. Also ensure that when disconnected, Puck.js
             // resets so the setInterval doesn't keep draining battery.
             connection.write("setInterval(function(){Bluetooth.println(Math.max(0, Math.round(analogRead(D2)*255)) + ';' + Puck.capSense());},100);NRF.on('disconnect', function() {reset()});\n",
-              function() { console.log("Ready..."); });
+              function () { console.log("Ready..."); });
           }, 1500);
         });
       });
     });
   </script>
- </body>
+</body>
+
 </html>
