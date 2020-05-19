@@ -50,12 +50,13 @@
       document.getElementById('pair-ghnob').addEventListener('click', function() {
         if (ros) {
           ros.close();
-          ros = new ROSLIB.Ros();
-          ros.on('close', () => statusRos.innerHTML = '❌');
-          ros.on('error', (error) => statusRos.innerHTML = '❌');
-          ros.on('connection', () => statusRos.innerHTML = '✅');
-          sliderCommands = new ROSLIB.Topic({ros: ros, name: '/slider_values', messageType: 'std_msgs/Int32'});
+          ros = undefined;
         }
+        ros = new ROSLIB.Ros();
+        ros.on('close', () => statusRos.innerHTML = '❌');
+        ros.on('error', (error) => statusRos.innerHTML = '❌');
+        ros.on('connection', () => statusRos.innerHTML = '✅');
+        sliderCommands = new ROSLIB.Topic({ros: ros, name: '/slider_values', messageType: 'std_msgs/Int32'});
         ros.connect(urlRos.value);
 
         // Close previous connection, if any
