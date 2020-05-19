@@ -41,11 +41,10 @@
       let sliderCommands;
 
       function onLine(value) {
-        console.log(value)
         let values = value.split(';').map(Number)
         let sliderCommand = new ROSLIB.Message({data: values[0]})
         sliderCommands.publish(sliderCommand);
-        statusGhnob.value = values[0];
+        statusGhnob.innerHTML = values[0];
       }
 
       document.getElementById('pair-ghnob').addEventListener('click', function() {
