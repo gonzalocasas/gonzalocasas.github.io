@@ -21,13 +21,10 @@
   </p>
 
   <p>
-    ROS connection:<br/>
-    <input type="text" id="status-ros" disabled value="❌"/>
-  </p>
-
-  <p>
-    Ghnob value: <br/>
-    <input type="text" id="status-ghnob" disabled value=""/>
+    The current value of Ghnob is <code id="status-ghnob">0</code>
+    and will be sent to ROS on 
+    <input type="text" id="url-ros" value="ws://localhost:9090"/>.
+    Connection status is <code id="status-ros"></code>).
   </p>
   
   <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
@@ -37,15 +34,11 @@
     document.addEventListener('DOMContentLoaded', function() {
       let statusRos = document.getElementById('status-ros');
       let statusGhnob = document.getElementById('status-ghnob');
+      let urlRos = document.getElementById('url-ros');
 
       let connection;
-      let ros = new ROSLIB.Ros();
-      ros.on('close', () => statusRos.value = '❌');
-      ros.on('error', (error) => statusRos.value = '❌');
-      ros.on('connection', () => statusRos.value = '✅');
-      ros.connect('ws://localhost:9090');
-
-      let sliderCommands = new ROSLIB.Topic({ros: ros, name: '/slider_values', messageType: 'std_msgs/Int32'});
+      let ros;
+      let sliderCommands;
 
       function onLine(value) {
         let values = value.split(';').map(Number)
@@ -55,6 +48,16 @@
       }
 
       document.getElementById('pair-ghnob').addEventListener('click', function() {
+        if (ros) {
+          ros.close();
+          ros = new ROSLIB.Ros();
+          ros.on('close', () => statusRos.innerHTML = '❌');
+          ros.on('error', (error) => statusRos.innerHTML = '❌');
+          ros.on('connection', () => statusRos.innerHTML = '✅');
+          sliderCommands = new ROSLIB.Topic({ros: ros, name: '/slider_values', messageType: 'std_msgs/Int32'});
+        }
+        ros.connect(urlRos.value);
+
         // Close previous connection, if any
         if (connection) {
           connection.close();
