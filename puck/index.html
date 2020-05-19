@@ -1,62 +1,98 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
-  <script src="roslib.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bluetooth Knob</title>
+  <meta name="description" content="A web bridge from bluetooth knob to ROS.">
+  <link rel="stylesheet" href="https://newcss.net/new.min.css">
+  <link rel="stylesheet" href="https://newcss.net/theme/terminal.css">
 </head>
 
 <body>
+  <header>
+    <b>Ghnobs</b> Physical knobs for virtual sliders, because we can.
+  </header>
+  
+  <p>
+    <a id="pair-ghnob">
+      <button>Find my Ghnob!</button>
+    </a>
+  </p>
+
+  <p>
+    ROS connection:<br/>
+    <input type="text" id="status-ros" disabled value="❌"/>
+  </p>
+
+  <p>
+    Ghnob value: <br/>
+    <input type="text" id="status-ghnob" disabled value=""/>
+  </p>
+  
+  <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
   <script src="https://www.puck-js.com/puck.js"></script>
+  <script src="roslib.min.js"></script>
   <script type="text/javascript">
-    let ros = new ROSLIB.Ros();
-    ros.on('error', (error) => console.log('ROS error: ' + error));
-    ros.on('connection', () => console.log('ROS connection ready!'));
-    ros.connect('ws://localhost:9090');
+    document.addEventListener('DOMContentLoaded', function() {
+      let statusRos = document.getElementById('status-ros');
+      let statusGhnob = document.getElementById('status-ghnob');
 
-    let sliderCommands = new ROSLIB.Topic({ros: ros, name: '/slider_commands', messageType: 'std_msgs/String'});
+      let connection;
+      let ros = new ROSLIB.Ros();
+      ros.on('close', () => statusRos.value = '❌');
+      ros.on('error', (error) => statusRos.value = '❌');
+      ros.on('connection', () => statusRos.value = '✅');
+      ros.connect('ws://localhost:9090');
 
-    function onLine(value) {
-      //let values = value.split(';').map(Number)
-      let sliderCommand = new ROSLIB.Message({data: value})
-      sliderCommands.publish(sliderCommand);
-    }
+      let sliderCommands = new ROSLIB.Topic({ros: ros, name: '/slider_values', messageType: 'std_msgs/Int32'});
 
-    // When ready
-    let connection;
-    document.addEventListener("click", function () {
-      if (connection) {
-        connection.close();
-        connection = undefined;
+      function onLine(value) {
+        let values = value.split(';').map(Number)
+        let sliderCommand = new ROSLIB.Message({data: values[0]})
+        sliderCommands.publish(sliderCommand);
+        statusGhnob.value = values[0];
       }
-      Puck.connect(function (c) {
-        if (!c) {
-          alert("Couldn't connect!");
-          return;
+
+      document.getElementById('pair-ghnob').addEventListener('click', function() {
+        // Close previous connection, if any
+        if (connection) {
+          connection.close();
+          connection = undefined;
         }
-        connection = c;
-        // Handle the data we get back, and call 'onLine'
-        // whenever we get a line
-        let buf = "";
-        connection.on("data", function (d) {
-          buf += d;
-          let i = buf.indexOf("\n");
-          while (i >= 0) {
-            onLine(buf.substr(0, i));
-            buf = buf.substr(i + 1);
-            i = buf.indexOf("\n");
+
+        Puck.connect(function (c) {
+          if (!c) {
+            alert("Couldn't connect!");
+            return;
           }
+          connection = c;
+          // Handle the data we get back, and call 'onLine'
+          // whenever we get a line
+          let buf = '';
+          connection.on('data', function (d) {
+            buf += d;
+            let i = buf.indexOf("\n");
+            while (i >= 0) {
+              onLine(buf.substr(0, i));
+              buf = buf.substr(i + 1);
+              i = buf.indexOf("\n");
+            }
+          });
+
+          // First, reset Puck.js
+          connection.write("reset();\n", function () {
+            // Wait for it to reset itself
+            setTimeout(function () {
+              // Now tell it to write data on the current pot and capsense to Bluetooth
+              // 10 times a second. Also ensure that when disconnected, Puck.js
+              // resets so the setInterval doesn't keep draining battery.
+              connection.write("setInterval(function(){Bluetooth.println(Math.max(0, Math.round(analogRead(D2)*255)) + ';' + Puck.capSense());},100);NRF.on('disconnect', function() {reset()});\n",
+                function () { console.log("BLE Ready..."); });
+            }, 1500);
+          });
         });
-        // First, reset Puck.js
-        connection.write("reset();\n", function () {
-          // Wait for it to reset itself
-          setTimeout(function () {
-            // Now tell it to write data on the current pot and capsense to Bluetooth
-            // 10 times a second. Also ensure that when disconnected, Puck.js
-            // resets so the setInterval doesn't keep draining battery.
-            connection.write("setInterval(function(){Bluetooth.println(Math.max(0, Math.round(analogRead(D2)*255)) + ';' + Puck.capSense());},100);NRF.on('disconnect', function() {reset()});\n",
-              function () { console.log("Ready..."); });
-          }, 1500);
-        });
+
       });
     });
   </script>
